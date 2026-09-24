@@ -46,11 +46,12 @@ def main(page: ft.Page):
         text_align=ft.TextAlign.LEFT,
         color="#000000",
     )
-
+#Adição da funcionaliade lambda, que torna a parte do código clicavel e volatil.
     card1 = ft.Container(
         padding=15,
         border_radius=12,
         bgcolor="#FFFFFF",
+        on_click=lambda e: escolher("Calabresa"),
         content=ft.Column([
             ft.Text("Calabresa", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
             ft.Text("calabresa, cebola e mussarela", color="#000000"),
@@ -65,6 +66,7 @@ def main(page: ft.Page):
         padding=15,
         border_radius=12,
         bgcolor="#FFFFFF",
+        on_click=lambda e: escolher("Muçarela"),
         content=ft.Column([
             ft.Text("Mussarela", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
             ft.Text("mussarela, tomate e orégano", color="#000000"),
@@ -79,6 +81,7 @@ def main(page: ft.Page):
         padding=15,
         border_radius=12,
         bgcolor="#FFFFFF",
+        on_click=lambda e: escolher("Frango"),
         content=ft.Column([
             ft.Text("Frango", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
             ft.Text("pizza de frango com borda recheada", color="#000000"),
@@ -93,6 +96,7 @@ def main(page: ft.Page):
         padding=15,
         border_radius=12,
         bgcolor="#FFFFFF",
+        on_click=lambda e: escolher("Portuguesa"),
         content=ft.Column([
             ft.Text("Portuguesa", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
             ft.Text("presunto, ovos, cebola e azeitona", color="#000000"),
@@ -110,45 +114,70 @@ def main(page: ft.Page):
         run_spacing=20,
     )
 
- 
-
     mensagem = ft.Text("Nenhuma pizza selecionada")
-
-    def escolher_calabresa(e):
-        mensagem.value = "Selecionada: Calabresa, "
-        mensagem.color="#280458"
+#Função para escolher o sabor da pizza
+    def escolher(sabor):
+        mensagem.value = "Selecionada: {sabor}"
+        mensagem.color = "#280458"
         page.update()
-     
-    def escolher_muçarela(e):
-            mensagem.value = "Selecionada: Mussarela"
-            mensagem.color="#280458"
+
+#Função para calcular o preço do pedidos
+    def calcular(e):
+        if not quantidade.value or not quantidade.value.isdigit():
+            resultado.value = "Digite uma quantidade inteira."
             page.update()
-    
-    def escolher_frango(e):
-            mensagem.value = "Selecionada: Frango"
-            mensagem.color="#280458"
-            page.update() 
-    
-    def escolher_portuguesa(e):
-            mensagem.value = "Selecionada: Portuguesa"
-            mensagem.color="#280458"
+            return
+
+        qtd = int(quantidade.value)
+
+        if qtd < 1 or qtd > 10:
+            resultado.value = "Quantidade deve ficar entre 1 e 10."
             page.update()
+            return
+
+        tipo = tamanho.value if tamanho.value else "M"
+        preco = 32 if tipo == "M" else 42
+        resultado.value = f"Parcial: R$ {preco * qtd:.2f}"
+        page.update()
+        return
+
     
-    escolha = ft.Row(
+    quantidade = ft.TextField(label="Quantidade", value="1")
+    tamanho = ft.RadioGroup(
+        content=ft.Row([
+            ft.Radio(value="M", label="M"),
+            ft.Radio(value="G", label="G"),
+        ]),
+        value="M"
+    )
+    resultado = ft.Text("")
+
+    botoes_pedido = ft.Column(
         controls=[
-            ft.FilledButton("Calabresa", on_click=escolher_calabresa, color="#000000"),
-            ft.FilledButton("Mussarela", on_click=escolher_muçarela, color="#000000"),
-            ft.FilledButton("Frango", on_click=escolher_frango, color="#000000"),
-            ft.FilledButton("Portuguesa", on_click=escolher_portuguesa, color="#000000"),
-            mensagem,
+            quantidade,
+            ft.Text("Tamanho da pizza:"),
+            tamanho,
+            resultado,
         ],
         spacing=10,
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
-    page.add(titulo, novo_titulo, slogan, didatica, orientacao, identificacao_dupla, escolha, linha_de_cards)
+    page.add(
+        titulo,
+        novo_titulo,
+        slogan,
+        didatica,
+        orientacao,
+        identificacao_dupla,
+        ft.Text("Tamanho"),
+        linha_de_cards,
+        ft.ElevatedButton("Fazer pedido", on_click=calcular, color="#000000"),
+        botoes_pedido,
+    )
 
 
 ft.run(main)
 
+#Finalização do código que permite o calculo de valores de tamanhos M e G de pizza, e seus valores.
 
