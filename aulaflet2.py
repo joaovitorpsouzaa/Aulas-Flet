@@ -1,5 +1,12 @@
 import flet as ft
 
+PIZZAS = [
+    {"id": "P01", "nome": "Muçarela", "m": 30, "g": 40, "ingredientes": "mussarela, tomate e orégano"},
+    {"id": "P02", "nome": "Calabresa", "m": 32, "g": 42, "ingredientes": "calabresa, cebola e mussarela"},
+    {"id": "P03", "nome": "Frango", "m": 32, "g": 42, "ingredientes": "frango com borda recheada"},
+    {"id": "P04", "nome": "Portuguesa", "m": 35, "g": 45, "ingredientes": "presunto, ovos, cebola e azeitona"},
+]
+
 
 def main(page: ft.Page):
     page.title = "PizzaDev"
@@ -27,12 +34,6 @@ def main(page: ft.Page):
         weight=ft.FontWeight.NORMAL,
         color="#000000",
     )
-    didatica = ft.Text(
-        "Versão didatica",
-        size=14,
-        weight=ft.FontWeight.NORMAL,
-        color="#000000",
-    )
     orientacao = ft.Text(
         "Área de gerenciamento de pedidos",
         size=14,
@@ -46,83 +47,33 @@ def main(page: ft.Page):
         text_align=ft.TextAlign.LEFT,
         color="#000000",
     )
-#Adição da funcionaliade lambda, que torna a parte do código clicavel e volatil.
-    card1 = ft.Container(
-        padding=15,
-        border_radius=12,
-        bgcolor="#FFFFFF",
-        on_click=lambda e: escolher("Calabresa"),
-        content=ft.Column([
-            ft.Text("Calabresa", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
-            ft.Text("calabresa, cebola e mussarela", color="#000000"),
-            ft.Row([
-                ft.Text("M: R$ 32", color="#000000"),
-                ft.Text("G: R$ 42", color="#000000"),
-            ]),
+
+    pedido = {"pizza": None}
+    mensagem = ft.Text("Nenhuma pizza selecionada", color="#000000")
+    quantidade = ft.TextField(label="Quantidade", value="1")
+    tamanho = ft.RadioGroup(
+        content=ft.Row([
+            ft.Radio(value="M", label="M"),
+            ft.Radio(value="G", label="G"),
         ]),
+        value="M",
     )
+    resultado = ft.Text("")
 
-    card2 = ft.Container(
-        padding=15,
-        border_radius=12,
-        bgcolor="#FFFFFF",
-        on_click=lambda e: escolher("Muçarela"),
-        content=ft.Column([
-            ft.Text("Mussarela", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
-            ft.Text("mussarela, tomate e orégano", color="#000000"),
-            ft.Row([
-                ft.Text("M: R$ 30", color="#000000"),
-                ft.Text("G: R$ 38", color="#000000"),
-            ]),
-        ]),
-    )
-
-    card3 = ft.Container(
-        padding=15,
-        border_radius=12,
-        bgcolor="#FFFFFF",
-        on_click=lambda e: escolher("Frango"),
-        content=ft.Column([
-            ft.Text("Frango", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
-            ft.Text("pizza de frango com borda recheada", color="#000000"),
-            ft.Row([
-                ft.Text("M: R$ 32", color="#000000"),
-                ft.Text("G: R$ 42", color="#000000"),
-            ]),
-        ]),
-    )
-
-    card4 = ft.Container(
-        padding=15,
-        border_radius=12,
-        bgcolor="#FFFFFF",
-        on_click=lambda e: escolher("Portuguesa"),
-        content=ft.Column([
-            ft.Text("Portuguesa", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
-            ft.Text("presunto, ovos, cebola e azeitona", color="#000000"),
-            ft.Row([
-                ft.Text("M: R$ 35", color="#000000"),
-                ft.Text("G: R$ 45", color="#000000"),
-            ]),
-        ]),
-    )
-
-    linha_de_cards = ft.Row(
-        controls=[card1, card2, card3, card4],
-        wrap=True,
-        spacing=20,
-        run_spacing=20,
-    )
-
-    mensagem = ft.Text("Nenhuma pizza selecionada")
-#Função para escolher o sabor da pizza
-    def escolher(sabor):
-        mensagem.value = "Selecionada: {sabor}"
+    def escolher(pizza):
+        pedido["pizza"] = pizza
+        mensagem.value = f"Selecionada: {pizza['nome']}"
         mensagem.color = "#280458"
+        resultado.value = f"Preço: M R$ {pizza['m']} | G R$ {pizza['g']}"
         page.update()
 
-#Função para calcular o preço do pedidos
     def calcular(e):
+        pizza = pedido["pizza"]
+        if pizza is None:
+            resultado.value = "Selecione uma pizza primeiro."
+            page.update()
+            return
+
         if not quantidade.value or not quantidade.value.isdigit():
             resultado.value = "Digite uma quantidade inteira."
             page.update()
@@ -136,27 +87,42 @@ def main(page: ft.Page):
             return
 
         tipo = tamanho.value if tamanho.value else "M"
-        preco = 32 if tipo == "M" else 42
-        resultado.value = f"Parcial: R$ {preco * qtd:.2f}"
+        preco = pizza["m"] if tipo == "M" else pizza["g"]
+        resultado.value = f"Parcial: {qtd}x {pizza['nome']} ({tipo}) = R$ {preco * qtd:.2f}"
         page.update()
-        return
 
-    
-    quantidade = ft.TextField(label="Quantidade", value="1")
-    tamanho = ft.RadioGroup(
-        content=ft.Row([
-            ft.Radio(value="M", label="M"),
-            ft.Radio(value="G", label="G"),
-        ]),
-        value="M"
+#Parte responsável por gerar os cards, removendo a duplicação para criação dos espaços com sabores de pizza.
+    cards = []
+    for pizza in PIZZAS:
+        card = ft.Container(
+            padding=15,
+            border_radius=12,
+            bgcolor="#FFFFFF",
+            on_click=lambda e, p=pizza: escolher(p),
+            content=ft.Column([
+                ft.Text(pizza["nome"], size=20, weight=ft.FontWeight.BOLD, color="#000000"),
+                ft.Text(pizza["ingredientes"], color="#000000"),
+                ft.Row([
+                    ft.Text(f"M: R$ {pizza['m']}", color="#000000"),
+                    ft.Text(f"G: R$ {pizza['g']}", color="#000000"),
+                ]),
+            ]),
+        )
+        cards.append(card)
+
+    linha_de_cards = ft.Row(
+        controls=cards,
+        wrap=True,
+        spacing=20,
+        run_spacing=20,
     )
-    resultado = ft.Text("")
 
     botoes_pedido = ft.Column(
         controls=[
             quantidade,
             ft.Text("Tamanho da pizza:"),
             tamanho,
+            mensagem,
             resultado,
         ],
         spacing=10,
@@ -167,10 +133,8 @@ def main(page: ft.Page):
         titulo,
         novo_titulo,
         slogan,
-        didatica,
         orientacao,
         identificacao_dupla,
-        ft.Text("Tamanho"),
         linha_de_cards,
         ft.ElevatedButton("Fazer pedido", on_click=calcular, color="#000000"),
         botoes_pedido,
@@ -179,5 +143,4 @@ def main(page: ft.Page):
 
 ft.run(main)
 
-#Finalização do código que permite o calculo de valores de tamanhos M e G de pizza, e seus valores.
-
+#O layout não precisou ser duplicado, pois sua criação já é realizada pela unica função criar_cards(), que gera os cards das pizzas nos containers(espaços)
