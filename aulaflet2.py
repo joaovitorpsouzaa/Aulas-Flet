@@ -88,14 +88,7 @@ def main(page: ft.Page):
 
         def avancar_carrinho(e):
             if quantidade_input.value.isdigit() and int(quantidade_input.value) > 0:
-                quantidade=int(quantidade_input.value)
-
-                if quantidade > 10:
-                    quantidade = 10
-
-                estado["quantidade"] = int(quantidade_input.value)
-                estado["tamanho"] = tamanho_radio.value
-                preco = pizza["m"] if tamanho_radio.value == "M" else pizza["g"]
+                quantidade = int(quantidade_input.value)
                 item_existente = next(
                     (
                         item for item in carrinho
@@ -103,15 +96,30 @@ def main(page: ft.Page):
                         and item["tamanho"] == tamanho_radio.value
                     ),
                     None,
-                )s
+                )
+                quantidade_total = quantidade
                 if item_existente:
-                    item_existente["qtd"] += estado["quantidade"]
+                    quantidade_total += item_existente["qtd"]
+
+                if quantidade_total > 10:
+                    quantidade_input.error_text = (
+                        "O máximo permitido por sabor e tamanho é 10."
+                    )
+                    page.update()
+                    return
+
+                quantidade_input.error_text = None
+                estado["quantidade"] = quantidade
+                estado["tamanho"] = tamanho_radio.value
+                preco = pizza["m"] if tamanho_radio.value == "M" else pizza["g"]
+                if item_existente:
+                    item_existente["qtd"] += quantidade
                 else:
                     carrinho.append({
                         "nome": pizza["nome"],
                         "tamanho": tamanho_radio.value,
                         "preco": preco,
-                        "qtd": estado["quantidade"],
+                        "qtd": quantidade,
                     })
                 mostrar_carrinho()
                 atualizar_carrinho()
