@@ -90,6 +90,24 @@ def main(page: ft.Page):
             if quantidade_input.value.isdigit() and int(quantidade_input.value) > 0:
                 estado["quantidade"] = int(quantidade_input.value)
                 estado["tamanho"] = tamanho_radio.value
+                preco = pizza["m"] if tamanho_radio.value == "M" else pizza["g"]
+                item_existente = next(
+                    (
+                        item for item in carrinho
+                        if item["nome"] == pizza["nome"]
+                        and item["tamanho"] == tamanho_radio.value
+                    ),
+                    None,
+                )
+                if item_existente:
+                    item_existente["qtd"] = estado["quantidade"]
+                else:
+                    carrinho.append({
+                        "nome": pizza["nome"],
+                        "tamanho": tamanho_radio.value,
+                        "preco": preco,
+                        "qtd": estado["quantidade"],
+                    })
                 mostrar_carrinho()
 
         area.content = ft.Column(
@@ -107,32 +125,44 @@ def main(page: ft.Page):
         )
         area.update()
 
-    # --- TELA 4: CARRINHO ---
-    def mostrar_carrinho():
-        pizza = estado["pizza"]
-        if not pizza:
-            area.content = ft.Column([
-                ft.Text("Seu carrinho está vazio!", size=22, color="#000000"),
-                ft.ElevatedButton("Ir para o Cardápio", on_click=lambda e: mostrar_cardapio())
-            ])
-        else:
-            qtd = estado["quantidade"]
-            tam = estado["tamanho"]
-            preco_unitario = pizza["m"] if tam == "M" else pizza["g"]
-            total = preco_unitario * qtd
 
-            area.content = ft.Column([
-                ft.Text("Seu Carrinho", size=26, weight=ft.FontWeight.BOLD, color="#000000"),
-                ft.Text(f"Pizza: {pizza['nome']} ({tam})"),
-                ft.Text(f"Quantidade: {qtd}"),
-                ft.Text(f"Total: R$ {total:.2f}", size=18, weight=ft.FontWeight.BOLD, color="#280458"),
-                ft.Row([
-                    ft.ElevatedButton("Voltar para Seleção", on_click=lambda e: mostrar_selecao()),
-                    ft.ElevatedButton("Voltar ao Cardápio", on_click=lambda e: mostrar_cardapio())
-                ], spacing=10)
-            ], spacing=15)
-        
-        area.update()
+    # --- TELA 4: CARRINHO ---
+    carrinho = []
+    lista_visual = ft.ListView(spacing=8, expand=True)
+    subtotal_texto = ft.Text("Subtotal: R$ 0,00")
+    
+    def atualizar_carrinho():
+        lista_visual.controls.clear()
+        subtotal = 0
+        for item in carrinho:
+            parcial = item["preco"] * item["qtd"]
+            subtotal += parcial
+            lista_visual.controls.append(
+                ft.Text(
+                    f'{item["nome"]} ({item["tamanho"]}) x{item["qtd"]} '
+                    f"- R$ {parcial:.2f}"
+                )
+            )
+
+        if not carrinho:
+            lista_visual.controls.append(ft.Text("Seu carrinho está vazio!"))
+
+        subtotal_texto.value = f"Subtotal: R$ {subtotal:.2f}"
+        page.update()
+
+    def mostrar_carrinho():
+        area.content = ft.Column([
+            ft.Text("Seu Carrinho", size=26, weight=ft.FontWeight.BOLD, color="#000000"),
+            lista_visual,
+            subtotal_texto,
+            ft.Row([
+                ft.ElevatedButton("Atualizar Carrinho", on_click=lambda e: atualizar_carrinho()),
+                ft.ElevatedButton("Voltar para Seleção", on_click=lambda e: mostrar_selecao()),
+                ft.ElevatedButton("Voltar ao Cardápio", on_click=lambda e: mostrar_cardapio())
+            ], spacing=10)
+        ], spacing=15)
+        atualizar_carrinho()
+
 
     # Adiciona a área principal e exibe a primeira tela
     page.add(area)
