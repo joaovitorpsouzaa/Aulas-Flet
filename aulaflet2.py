@@ -88,6 +88,11 @@ def main(page: ft.Page):
 
         def avancar_carrinho(e):
             if quantidade_input.value.isdigit() and int(quantidade_input.value) > 0:
+                quantidade=int(quantidade_input.value)
+
+                if quantidade > 10:
+                    quantidade = 10
+
                 estado["quantidade"] = int(quantidade_input.value)
                 estado["tamanho"] = tamanho_radio.value
                 preco = pizza["m"] if tamanho_radio.value == "M" else pizza["g"]
@@ -98,9 +103,9 @@ def main(page: ft.Page):
                         and item["tamanho"] == tamanho_radio.value
                     ),
                     None,
-                )
+                )s
                 if item_existente:
-                    item_existente["qtd"] = estado["quantidade"]
+                    item_existente["qtd"] += estado["quantidade"]
                 else:
                     carrinho.append({
                         "nome": pizza["nome"],
@@ -109,6 +114,8 @@ def main(page: ft.Page):
                         "qtd": estado["quantidade"],
                     })
                 mostrar_carrinho()
+                atualizar_carrinho()
+
 
         area.content = ft.Column(
             controls=[
@@ -148,7 +155,6 @@ def main(page: ft.Page):
             lista_visual.controls.append(ft.Text("Seu carrinho está vazio!"))
 
         subtotal_texto.value = f"Subtotal: R$ {subtotal:.2f}"
-        page.update()
 
     def mostrar_carrinho():
         area.content = ft.Column([
@@ -162,6 +168,8 @@ def main(page: ft.Page):
             ], spacing=10)
         ], spacing=15)
         atualizar_carrinho()
+        
+        area.update()
 
 
     # Adiciona a área principal e exibe a primeira tela
