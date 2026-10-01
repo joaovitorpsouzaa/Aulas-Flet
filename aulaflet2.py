@@ -35,6 +35,21 @@ def main(page: ft.Page):
         )
         area.update()
 
+
+    def avisar(texto):
+        page.show_dialog(ft.SnackBar(ft.Text(texto)))
+
+    def confirmar_limpeza(e):
+        dialogo = ft.AlertDialog(
+        title=ft.Text("Limpar carrinho?"),
+        content=ft.Text("Todos os itens serão removidos."),
+        actions=[
+        ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
+        ft.TextButton("Confirmar", on_click=limpar_carrinho),
+        ],
+        )
+        page.show_dialog(dialogo)
+
     # --- TELA 2: CARDÁPIO ---
     def mostrar_cardapio():
         cards = []
@@ -153,9 +168,21 @@ def main(page: ft.Page):
             parcial = item["preco"] * item["qtd"]
             subtotal += parcial
             lista_visual.controls.append(
-                ft.Text(
-                    f'{item["nome"]} ({item["tamanho"]}) x{item["qtd"]} '
-                    f"- R$ {parcial:.2f}"
+                ft.Row(
+                    controls=[
+                        ft.Text(
+                            f'{item["nome"]} ({item["tamanho"]}) x{item["qtd"]} '
+                            f"- R$ {parcial:.2f}"
+                        ),
+                        ft.ElevatedButton(
+                            ft.Icon(ft.Icons.DELETE_OUTLINED),
+                            on_click=lambda e, i=item: limpar_carrinho(e, i),
+                        ),
+                        ft.ElevatedButton(
+                            ft.Icon(ft.Icons.ADD),
+                            on_click=lambda e, i=item: adicionar_ao_carrinho(e, i),
+                        )
+                    ]
                 )
             )
 
@@ -163,6 +190,29 @@ def main(page: ft.Page):
             lista_visual.controls.append(ft.Text("Seu carrinho está vazio!"))
 
         subtotal_texto.value = f"Subtotal: R$ {subtotal:.2f}"
+
+    def adicionar_ao_carrinho(e, item):
+        if item["qtd"] < 10:
+            item["qtd"] += 1
+            atualizar_carrinho()
+            page.update()
+            avisar(f'1 unidade de {item["nome"]} adicionada ao carrinho.')
+        else:
+            avisar("O máximo permitido por sabor e tamanho é 10.")
+
+    def limpar_carrinho(e, item=None):
+        if item is None:
+            carrinho.clear()
+            page.pop_dialog()
+            mensagem = "Carrinho limpo com sucesso!"
+        else:
+            carrinho.remove(item)
+            mensagem = f'{item["nome"]} removida do carrinho.'
+
+        atualizar_carrinho()
+        page.update()
+        avisar(mensagem)
+
 
     def mostrar_carrinho():
         area.content = ft.Column([
@@ -172,7 +222,8 @@ def main(page: ft.Page):
             ft.Row([
                 ft.ElevatedButton("Atualizar Carrinho", on_click=lambda e: atualizar_carrinho()),
                 ft.ElevatedButton("Voltar para Seleção", on_click=lambda e: mostrar_selecao()),
-                ft.ElevatedButton("Voltar ao Cardápio", on_click=lambda e: mostrar_cardapio())
+                ft.ElevatedButton("Voltar ao Cardápio", on_click=lambda e: mostrar_cardapio()),
+                ft.ElevatedButton("Limpar Carrinho", on_click=confirmar_limpeza)
             ], spacing=10)
         ], spacing=15)
         atualizar_carrinho()
